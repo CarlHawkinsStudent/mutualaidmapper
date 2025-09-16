@@ -1,0 +1,237 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+  color: #333;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark-mode {
+  background: #1a1a1a;
+  color: #e0e0e0;
+}
+
+.App {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  min-height: 100vh;
+  background: inherit;
+}
+
+.App-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.App-header h1 {
+  color: #2c3e50;
+  margin: 0;
+}
+
+.dark-mode-toggle {
+  background: none;
+  border: 2px solid #dee2e6;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dark-mode-toggle:hover {
+  background: #f8f9fa;
+}
+
+main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.report-form {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.report-form h2 {
+  margin-top: 0;
+  color: #495057;
+}
+
+.report-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.report-form input,
+.report-form select,
+.report-form textarea {
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.report-form select {
+  cursor: pointer;
+}
+
+.report-form select:disabled {
+  background: #f8f9fa;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.App.dark-mode select:disabled {
+  background: #2a2a2a;
+  color: #666;
+}
+
+.report-form button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.report-form button:hover {
+  background: #0056b3;
+}
+
+.reports-list {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.reports-list h2 {
+  margin-top: 0;
+  color: #495057;
+}
+
+.report-item {
+  background: white;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 6px;
+  border-left: 4px solid #007bff;
+}
+
+.report-item h3 {
+  margin: 0 0 10px 0;
+  color: #2c3e50;
+  font-size: 16px;
+}
+
+.report-item p {
+  margin: 5px 0;
+  color: #6c757d;
+}
+
+.report-item small {
+  color: #868e96;
+  display: block;
+  margin-top: 5px;
+}
+
+.map-container {
+  grid-column: 1 / -1;
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.map-container h2 {
+  margin-top: 0;
+  color: #495057;
+}
+
+/* Dark Mode Styles */
+.App.dark-mode {
+  color: #e0e0e0;
+}
+
+.App.dark-mode .App-header h1 {
+  color: #e0e0e0;
+}
+
+.App.dark-mode .dark-mode-toggle {
+  border-color: #444;
+  color: #e0e0e0;
+}
+
+.App.dark-mode .dark-mode-toggle:hover {
+  background: #333;
+}
+
+.App.dark-mode .report-form,
+.App.dark-mode .reports-list,
+.App.dark-mode .map-container {
+  background: #2d2d2d;
+  border-color: #444;
+}
+
+.App.dark-mode .report-form h2,
+.App.dark-mode .reports-list h2,
+.App.dark-mode .map-container h2 {
+  color: #e0e0e0;
+}
+
+.App.dark-mode .report-item {
+  background: #3a3a3a;
+  border-left-color: #007bff;
+}
+
+.App.dark-mode .report-item h3 {
+  color: #e0e0e0;
+}
+
+.App.dark-mode input,
+.App.dark-mode select,
+.App.dark-mode textarea {
+  background: #3a3a3a;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+.App.dark-mode input::placeholder,
+.App.dark-mode textarea::placeholder {
+  color: #aaa;
+}
+
+/* Cluster icon styles */
+.custom-cluster-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.App.dark-mode .custom-cluster-icon div {
+  background-color: #0056b3 !important;
+}
+
+@media (max-width: 768px) {
+  main {
+    grid-template-columns: 1fr;
+  }
+  
+  .App-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+}
