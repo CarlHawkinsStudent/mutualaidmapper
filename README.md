@@ -1,6 +1,6 @@
 # Mutual Aid Mapper
 
-A simple web application for reporting and mapping mutual aid activities.
+A community-focused web application that connects people offering and seeking mutual aid. Organizations and individuals can report their mutual aid activities, making it easier for community members to find local support and resources through an interactive map interface.
 
 ## Setup
 

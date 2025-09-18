@@ -225,6 +225,24 @@ main {
   background-color: #0056b3 !important;
 }
 
+/* Contact link styles */
+.report-item a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.report-item a:hover {
+  text-decoration: underline;
+}
+
+.App.dark-mode .report-item a {
+  color: #66b3ff;
+}
+
+.App.dark-mode .report-item a:hover {
+  color: #99ccff;
+}
+
 @media (max-width: 768px) {
   main {
     grid-template-columns: 1fr;

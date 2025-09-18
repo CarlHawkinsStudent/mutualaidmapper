@@ -109,6 +109,7 @@ const MapComponent = ({ reports, darkMode }) => {
                       <div key={report.id} style={{marginBottom: '10px', paddingBottom: '10px', borderBottom: idx < group.length - 1 ? '1px solid #eee' : 'none'}}>
                         <strong>{report.activityType}</strong> by {report.groupName}<br/>
                         <small>{report.description}</small><br/>
+                        <small>Contact: <a href={`mailto:${report.contact?.email}`}>{report.contact?.email}</a></small><br/>
                         <small>{new Date(report.timestamp).toLocaleDateString()}</small>
                       </div>
                     ))}
@@ -118,6 +119,7 @@ const MapComponent = ({ reports, darkMode }) => {
                     <h4>{primaryReport.activityType}</h4>
                     <p><strong>{primaryReport.groupName}</strong></p>
                     <p>{primaryReport.description}</p>
+                    <small>Contact: <a href={`mailto:${primaryReport.contact?.email}`}>{primaryReport.contact?.email}</a></small><br/>
                     <small>{new Date(primaryReport.timestamp).toLocaleDateString()}</small>
                   </>
                 )}
