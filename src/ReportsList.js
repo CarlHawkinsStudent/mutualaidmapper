@@ -6,7 +6,7 @@ const ReportsList = ({ reports }) => {
       <h2>Recent Activities</h2>
       {reports.map((report) => (
         <div key={report.id} className="report-item">
-          <h3>{report.activityType} by {report.groupName}</h3>
+          <h3>{report.groupName} - {report.activityType}</h3>
           <p>{report.description}</p>
           <small>Contact: 
             <a href={`mailto:${report.contact?.email}`}>{report.contact?.email || 'No email'}</a>

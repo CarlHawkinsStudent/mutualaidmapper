@@ -56,14 +56,12 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
-# pnpm
-pnpm-lock.yaml
+# Lock files (choose one package manager)
+# pnpm-lock.yaml
+# package-lock.json
 
 # Tool versions
 .tool-versions
-
-# Package lock files (keep only one)
-package-lock.json
 
 # Temporary files
 *.tmp

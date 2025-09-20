@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import React, { useMemo, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -19,31 +19,41 @@ const activityColors = {
   'Other': '#9b59b6'
 };
 
-const MapComponent = ({ reports, darkMode }) => {
+const ZoomHandler = ({ onZoomChange }) => {
+  useMapEvents({
+    zoomend: (e) => {
+      onZoomChange(e.target.getZoom());
+    },
+  });
+  return null;
+};
+
+const MapComponent = ({ activities, darkMode }) => {
   const defaultCenter = [39.8283, -98.5795]; // Geographic center of US
+  const [currentZoom, setCurrentZoom] = useState(4);
   
-  // Group nearby reports to prevent clustering
-  const groupedReports = useMemo(() => {
+  // Group nearby activities to prevent clustering
+  const groupedActivities = useMemo(() => {
     const groups = [];
     const processed = new Set();
     
-    reports.forEach((report, index) => {
+    activities.forEach((activity, index) => {
       if (processed.has(index)) return;
       
-      const group = [report];
+      const group = [activity];
       processed.add(index);
       
-      // Find nearby reports (within ~0.01 degrees, roughly 1km)
-      reports.forEach((otherReport, otherIndex) => {
+      // Find nearby activities (within ~0.01 degrees, roughly 1km)
+      activities.forEach((otherActivity, otherIndex) => {
         if (processed.has(otherIndex) || index === otherIndex) return;
         
         const distance = Math.sqrt(
-          Math.pow(report.location.lat - otherReport.location.lat, 2) +
-          Math.pow(report.location.lng - otherReport.location.lng, 2)
+          Math.pow(activity.location.lat - otherActivity.location.lat, 2) +
+          Math.pow(activity.location.lng - otherActivity.location.lng, 2)
         );
         
         if (distance < 0.01) {
-          group.push(otherReport);
+          group.push(otherActivity);
           processed.add(otherIndex);
         }
       });
@@ -52,13 +62,18 @@ const MapComponent = ({ reports, darkMode }) => {
     });
     
     return groups;
-  }, [reports]);
+  }, [activities]);
   
   const createCustomIcon = (activityType, count = 1) => {
     const color = activityColors[activityType] || '#9b59b6';
-    const size = count > 1 ? 30 : 20;
+    // Scale size based on zoom level (smaller when zoomed out)
+    const baseSize = 20;
+    const minSize = 8;
+    const size = Math.max(minSize, baseSize * (currentZoom / 8));
+    const fontSize = Math.max(6, size * 0.5);
+    
     const html = count > 1 
-      ? `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">${count}</div>`
+      ? `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: ${fontSize}px;">${count}</div>`
       : `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`;
     
     return L.divIcon({
@@ -79,15 +94,16 @@ const MapComponent = ({ reports, darkMode }) => {
       zoom={4} 
       style={{ height: '400px', width: '100%' }}
     >
+      <ZoomHandler onZoomChange={setCurrentZoom} />
       <TileLayer
         url={tileUrl}
         attribution='&copy; OpenStreetMap contributors'
       />
-      {groupedReports.map((group, groupIndex) => {
-        const primaryReport = group[0];
+      {groupedActivities.map((group, groupIndex) => {
+        const primaryActivity = group[0];
         const count = group.length;
-        const mostCommonType = group.reduce((acc, report) => {
-          acc[report.activityType] = (acc[report.activityType] || 0) + 1;
+        const mostCommonType = group.reduce((acc, activity) => {
+          acc[activity.activityType] = (acc[activity.activityType] || 0) + 1;
           return acc;
         }, {});
         const dominantType = Object.keys(mostCommonType).reduce((a, b) => 
@@ -97,7 +113,7 @@ const MapComponent = ({ reports, darkMode }) => {
         return (
           <Marker
             key={`group-${groupIndex}`}
-            position={[primaryReport.location.lat, primaryReport.location.lng]}
+            position={[primaryActivity.location.lat, primaryActivity.location.lng]}
             icon={createCustomIcon(dominantType, count)}
           >
             <Popup>
@@ -105,22 +121,22 @@ const MapComponent = ({ reports, darkMode }) => {
                 {count > 1 ? (
                   <>
                     <h4>{count} Activities in this area</h4>
-                    {group.map((report, idx) => (
-                      <div key={report.id} style={{marginBottom: '10px', paddingBottom: '10px', borderBottom: idx < group.length - 1 ? '1px solid #eee' : 'none'}}>
-                        <strong>{report.activityType}</strong> by {report.groupName}<br/>
-                        <small>{report.description}</small><br/>
-                        <small>Contact: <a href={`mailto:${report.contact?.email}`}>{report.contact?.email}</a></small><br/>
-                        <small>{new Date(report.timestamp).toLocaleDateString()}</small>
+                    {group.map((activity, idx) => (
+                      <div key={activity.id} style={{marginBottom: '10px', paddingBottom: '10px', borderBottom: idx < group.length - 1 ? '1px solid #eee' : 'none'}}>
+                        <strong>{activity.groupName}</strong> - {activity.activityType}<br/>
+                        <small>{activity.description}</small><br/>
+                        <small>Contact: <a href={`mailto:${activity.contact?.email}`}>{activity.contact?.email}</a></small><br/>
+                        <small>{new Date(activity.timestamp).toLocaleDateString()}</small>
                       </div>
                     ))}
                   </>
                 ) : (
                   <>
-                    <h4>{primaryReport.activityType}</h4>
-                    <p><strong>{primaryReport.groupName}</strong></p>
-                    <p>{primaryReport.description}</p>
-                    <small>Contact: <a href={`mailto:${primaryReport.contact?.email}`}>{primaryReport.contact?.email}</a></small><br/>
-                    <small>{new Date(primaryReport.timestamp).toLocaleDateString()}</small>
+                    <h4>{primaryActivity.groupName}</h4>
+                    <p><strong>{primaryActivity.activityType}</strong></p>
+                    <p>{primaryActivity.description}</p>
+                    <small>Contact: <a href={`mailto:${primaryActivity.contact?.email}`}>{primaryActivity.contact?.email}</a></small><br/>
+                    <small>{new Date(primaryActivity.timestamp).toLocaleDateString()}</small>
                   </>
                 )}
               </div>

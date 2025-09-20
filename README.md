@@ -18,10 +18,9 @@ This will start both the backend server (port 5000) and React frontend (port 300
 
 ## Usage
 
-- Fill out the form to report mutual aid activities
-- View recent activities in the list
-- See all activities plotted on the interactive map
-- Different activity types are color-coded on the map
+- Fill out the form to submit mutual aid activities
+- Submit mutual aid activities with location data
+- Real-time updates when new activities are submitted
 
 ## Features
 

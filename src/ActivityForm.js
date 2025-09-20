@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 
-// API endpoint - use same domain/port
 const API_BASE = window.location.origin;
 
-const ReportForm = ({ onReportSubmit }) => {
-  const [groupName, setGroupName] = useState('');
+const ActivityForm = ({ onActivitySubmit, groups }) => {
+  const [groupId, setGroupId] = useState(groups?.[0]?._id || '');
   const [activityType, setActivityType] = useState('Food Distribution');
   const [description, setDescription] = useState('');
   const [zipcode, setZipcode] = useState('');
@@ -15,9 +14,6 @@ const ReportForm = ({ onReportSubmit }) => {
     event.preventDefault();
 
     // Validate zipcode using Zippopotam.us
-    console.log('Validating zipcode:', zipcode);
-    console.log('API endpoint:', `${API_BASE}/api/validate-address`);
-    
     const addressResponse = await fetch(`${API_BASE}/api/validate-address`, {
       method: 'POST',
       headers: {
@@ -25,21 +21,21 @@ const ReportForm = ({ onReportSubmit }) => {
       },
       body: JSON.stringify({ zipcode }),
     });
-    
-    console.log('Address validation response status:', addressResponse.status);
-    
+
     if (!addressResponse.ok) {
       const errorData = await addressResponse.json().catch(() => ({ error: 'Unknown error' }));
-      console.log('Address validation error:', errorData);
       alert(`Invalid zipcode: ${errorData.error}`);
       return;
     }
-    
+
     const addressData = await addressResponse.json();
     const coords = [addressData.coordinates.lat, addressData.coordinates.lng];
-    
-    const newReport = {
-      groupName,
+
+    const selectedGroup = groups.find(g => g._id === groupId);
+
+    const newActivity = {
+      groupId,
+      groupName: selectedGroup ? selectedGroup.name : '',
       activityType,
       description,
       contact: {
@@ -56,35 +52,30 @@ const ReportForm = ({ onReportSubmit }) => {
       },
     };
 
-    console.log('Submitting report:', newReport);
-    console.log('Contact info being sent:', newReport.contact);
-    
     try {
-      await onReportSubmit(newReport);
-      
+      await onActivitySubmit(newActivity);
+
       // Clear form fields only after successful submission
-      setGroupName('');
+      setGroupId(groups?.[0]?._id || '');
       setDescription('');
       setZipcode('');
       setEmail('');
       setPhone('');
     } catch (error) {
-      console.error("Error submitting report:", error);
       alert(`Error: ${error.message || 'Unknown error'}. Please try again.`);
     }
   };
 
   return (
-    <div className="report-form">
-      <h2>Report an Activity</h2>
+    <div className="activity-form">
+      <h2>Submit an Activity</h2>
       <form onSubmit={handleSubmit}>
-        <input 
-          type="text" 
-          value={groupName} 
-          onChange={(e) => setGroupName(e.target.value)} 
-          placeholder="Group Name" 
-          required 
-        />
+        <select value={groupId} onChange={e => setGroupId(e.target.value)} required>
+          <option value="" disabled>Select Group</option>
+          {groups.map(group => (
+            <option key={group._id} value={group._id}>{group.name}</option>
+          ))}
+        </select>
         <select value={activityType} onChange={(e) => setActivityType(e.target.value)}>
           <option>Food Distribution</option>
           <option>Shelter</option>
@@ -120,10 +111,11 @@ const ReportForm = ({ onReportSubmit }) => {
           onChange={(e) => setDescription(e.target.value)} 
           placeholder="Activity Description..."
         />
-        <button type="submit">Submit Report</button>
+        <button type="submit">Submit Activity</button>
       </form>
     </div>
   );
 };
 
-export default ReportForm;
+export default ActivityForm;
+/ActivityForm onActivitySubmit={handleActivitySubmit} groups={userGroups} /

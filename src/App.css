@@ -54,38 +54,38 @@ main {
   margin-bottom: 30px;
 }
 
-.report-form {
+.activity-form {
   background: #f8f9fa;
   padding: 20px;
   border-radius: 8px;
   border: 1px solid #dee2e6;
 }
 
-.report-form h2 {
+.activity-form h2 {
   margin-top: 0;
   color: #495057;
 }
 
-.report-form form {
+.activity-form form {
   display: flex;
   flex-direction: column;
   gap: 15px;
 }
 
-.report-form input,
-.report-form select,
-.report-form textarea {
+.activity-form input,
+.activity-form select,
+.activity-form textarea {
   padding: 10px;
   border: 1px solid #ced4da;
   border-radius: 4px;
   font-size: 14px;
 }
 
-.report-form select {
+.activity-form select {
   cursor: pointer;
 }
 
-.report-form select:disabled {
+.activity-form select:disabled {
   background: #f8f9fa;
   color: #6c757d;
   cursor: not-allowed;
@@ -96,7 +96,7 @@ main {
   color: #666;
 }
 
-.report-form button {
+.activity-form button {
   background: #007bff;
   color: white;
   border: none;
@@ -106,11 +106,11 @@ main {
   font-size: 16px;
 }
 
-.report-form button:hover {
+.activity-form button:hover {
   background: #0056b3;
 }
 
-.reports-list {
+.activities-list {
   background: #f8f9fa;
   padding: 20px;
   border-radius: 8px;
@@ -119,12 +119,12 @@ main {
   overflow-y: auto;
 }
 
-.reports-list h2 {
+.activities-list h2 {
   margin-top: 0;
   color: #495057;
 }
 
-.report-item {
+.activity-item {
   background: white;
   padding: 15px;
   margin-bottom: 15px;
@@ -132,18 +132,18 @@ main {
   border-left: 4px solid #007bff;
 }
 
-.report-item h3 {
+.activity-item h3 {
   margin: 0 0 10px 0;
   color: #2c3e50;
   font-size: 16px;
 }
 
-.report-item p {
+.activity-item p {
   margin: 5px 0;
   color: #6c757d;
 }
 
-.report-item small {
+.activity-item small {
   color: #868e96;
   display: block;
   margin-top: 5px;
@@ -180,25 +180,25 @@ main {
   background: #333;
 }
 
-.App.dark-mode .report-form,
-.App.dark-mode .reports-list,
+.App.dark-mode .activity-form,
+.App.dark-mode .activities-list,
 .App.dark-mode .map-container {
   background: #2d2d2d;
   border-color: #444;
 }
 
-.App.dark-mode .report-form h2,
-.App.dark-mode .reports-list h2,
+.App.dark-mode .activity-form h2,
+.App.dark-mode .activities-list h2,
 .App.dark-mode .map-container h2 {
   color: #e0e0e0;
 }
 
-.App.dark-mode .report-item {
+.App.dark-mode .activity-item {
   background: #3a3a3a;
   border-left-color: #007bff;
 }
 
-.App.dark-mode .report-item h3 {
+.App.dark-mode .activity-item h3 {
   color: #e0e0e0;
 }
 
@@ -226,20 +226,20 @@ main {
 }
 
 /* Contact link styles */
-.report-item a {
+.activity-item a {
   color: #007bff;
   text-decoration: none;
 }
 
-.report-item a:hover {
+.activity-item a:hover {
   text-decoration: underline;
 }
 
-.App.dark-mode .report-item a {
+.App.dark-mode .activity-item a {
   color: #66b3ff;
 }
 
-.App.dark-mode .report-item a:hover {
+.App.dark-mode .activity-item a:hover {
   color: #99ccff;
 }
 
