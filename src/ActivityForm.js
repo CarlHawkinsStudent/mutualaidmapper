@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 
 const API_BASE = window.location.origin;
 
-const ActivityForm = ({ onActivitySubmit, groups }) => {
+const ActivityForm = ({ onActivitySubmit, groups, user }) => {
   const [groupId, setGroupId] = useState(groups?.[0]?._id || '');
   const [activityType, setActivityType] = useState('Food Distribution');
   const [description, setDescription] = useState('');
   const [zipcode, setZipcode] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState('');
 
   const handleSubmit = async (event) => {
@@ -34,7 +34,6 @@ const ActivityForm = ({ onActivitySubmit, groups }) => {
     const selectedGroup = groups.find(g => g._id === groupId);
 
     const newActivity = {
-      groupId,
       groupName: selectedGroup ? selectedGroup.name : '',
       activityType,
       description,
@@ -59,7 +58,7 @@ const ActivityForm = ({ onActivitySubmit, groups }) => {
       setGroupId(groups?.[0]?._id || '');
       setDescription('');
       setZipcode('');
-      setEmail('');
+      setEmail(user?.email || '');
       setPhone('');
     } catch (error) {
       alert(`Error: ${error.message || 'Unknown error'}. Please try again.`);

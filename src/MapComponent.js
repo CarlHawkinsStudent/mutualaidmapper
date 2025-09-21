@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -31,20 +31,79 @@ const ZoomHandler = ({ onZoomChange }) => {
 const MapComponent = ({ activities, darkMode }) => {
   const defaultCenter = [39.8283, -98.5795]; // Geographic center of US
   const [currentZoom, setCurrentZoom] = useState(4);
+  const [selectedHour, setSelectedHour] = useState('all');
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [playInterval, setPlayInterval] = useState(null);
+  
+  // Get unique hours from activities
+  const availableHours = useMemo(() => {
+    if (!activities.length) return [];
+    const hours = activities.map(activity => {
+      const date = new Date(activity.timestamp);
+      return date.getHours();
+    }).sort((a, b) => a - b);
+    return [...new Set(hours)];
+  }, [activities]);
+  
+  // Filter activities by selected hour
+  const filteredActivities = useMemo(() => {
+    if (selectedHour === 'all') return activities;
+    return activities.filter(activity => {
+      const date = new Date(activity.timestamp);
+      return date.getHours() === selectedHour;
+    });
+  }, [activities, selectedHour]);
+  
+  // Play functionality
+  useEffect(() => {
+    if (isPlaying && availableHours.length > 0) {
+      const interval = setInterval(() => {
+        setSelectedHour(prev => {
+          if (prev === 'all') return availableHours[0];
+          const currentIndex = availableHours.indexOf(prev);
+          if (currentIndex >= availableHours.length - 1) {
+            setIsPlaying(false);
+            return 'all';
+          }
+          return availableHours[currentIndex + 1];
+        });
+      }, 1000);
+      setPlayInterval(interval);
+      return () => clearInterval(interval);
+    } else if (playInterval) {
+      clearInterval(playInterval);
+      setPlayInterval(null);
+    }
+  }, [isPlaying, availableHours, playInterval]);
+  
+  const handlePlay = () => {
+    if (availableHours.length === 0) return;
+    setIsPlaying(!isPlaying);
+    if (selectedHour === 'all') {
+      setSelectedHour(availableHours[0]);
+    }
+  };
+  
+  const formatHour = (hour) => {
+    if (hour === 'all') return 'All Hours';
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    return `${displayHour}:00 ${period}`;
+  };
   
   // Group nearby activities to prevent clustering
   const groupedActivities = useMemo(() => {
     const groups = [];
     const processed = new Set();
     
-    activities.forEach((activity, index) => {
+    filteredActivities.forEach((activity, index) => {
       if (processed.has(index)) return;
       
       const group = [activity];
       processed.add(index);
       
       // Find nearby activities (within ~0.01 degrees, roughly 1km)
-      activities.forEach((otherActivity, otherIndex) => {
+      filteredActivities.forEach((otherActivity, otherIndex) => {
         if (processed.has(otherIndex) || index === otherIndex) return;
         
         const distance = Math.sqrt(
@@ -62,7 +121,7 @@ const MapComponent = ({ activities, darkMode }) => {
     });
     
     return groups;
-  }, [activities]);
+  }, [filteredActivities]);
   
   const createCustomIcon = (activityType, count = 1) => {
     const color = activityColors[activityType] || '#9b59b6';
@@ -89,11 +148,14 @@ const MapComponent = ({ activities, darkMode }) => {
     : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
   return (
-    <MapContainer 
-      center={defaultCenter} 
-      zoom={4} 
-      style={{ height: '400px', width: '100%' }}
-    >
+    <div>
+      <MapContainer 
+        center={defaultCenter} 
+        zoom={4} 
+        minZoom={3}
+        maxBounds={[[-25, -190], [80, -50]]}
+        style={{ height: '400px', width: '100%' }}
+      >
       <ZoomHandler onZoomChange={setCurrentZoom} />
       <TileLayer
         url={tileUrl}
@@ -144,7 +206,37 @@ const MapComponent = ({ activities, darkMode }) => {
           </Marker>
         );
       })}
-    </MapContainer>
+      </MapContainer>
+      
+      {/* Time Controls */}
+      <div className="map-time-controls">
+        <button 
+          onClick={handlePlay}
+          disabled={availableHours.length === 0}
+          className={`map-play-btn ${isPlaying ? 'playing' : ''}`}
+        >
+          {isPlaying ? '⏸️' : '▶️'} {isPlaying ? 'Pause' : 'Play'}
+        </button>
+        
+        <select 
+          value={selectedHour}
+          onChange={(e) => {
+            setIsPlaying(false);
+            setSelectedHour(e.target.value === 'all' ? 'all' : parseInt(e.target.value));
+          }}
+          className="map-hour-select"
+        >
+          <option value="all">All Hours</option>
+          {availableHours.map(hour => (
+            <option key={hour} value={hour}>{formatHour(hour)}</option>
+          ))}
+        </select>
+        
+        <span className="map-activity-count">
+          Showing: {formatHour(selectedHour)} ({filteredActivities.length} activities)
+        </span>
+      </div>
+    </div>
   );
 };
 

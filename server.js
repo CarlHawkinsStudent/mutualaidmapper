@@ -21,9 +21,86 @@ app.use(express.json());
 let users = [];
 let groups = [];
 let messages = [];
+let activities = [];
 let nextUserId = 1;
 let nextGroupId = 1;
 let nextMessageId = 1;
+let nextId = 1;
+
+// Reset all data and create fresh admin user
+const resetAndCreateAdmin = async () => {
+  // Clear all existing data
+  users.length = 0;
+  groups.length = 0;
+  messages.length = 0;
+  activities.length = 0;
+  
+  // Reset counters
+  nextUserId = 1;
+  nextGroupId = 1;
+  nextMessageId = 1;
+  nextId = 1;
+  
+  // Create fresh admin user
+  const hashedPassword = await bcrypt.hash('LoveWillWin', 10);
+  users.push({
+    id: nextUserId++,
+    username: 'root',
+    email: 'admin@mutualaid.local',
+    passwordHash: hashedPassword,
+    groups: [],
+    zipcode: '',
+    pronouns: '',
+    bio: 'System Administrator',
+    isAdmin: true
+  });
+  
+  // Add sample activities for testing time controls
+  const now = new Date();
+  const sampleActivities = [
+    {
+      id: nextId++,
+      groupName: 'Downtown Food Bank',
+      activityType: 'Food Distribution',
+      description: 'Free groceries for families in need',
+      contact: { email: 'contact@foodbank.org' },
+      location: { lat: 40.7128, lng: -74.0060, city: 'New York', state: 'NY', zipcode: '10001' },
+      timestamp: new Date(now.getTime() - 3 * 60 * 60 * 1000).toISOString() // 3 hours ago
+    },
+    {
+      id: nextId++,
+      groupName: 'Community Shelter',
+      activityType: 'Shelter',
+      description: 'Temporary housing assistance',
+      contact: { email: 'help@shelter.org' },
+      location: { lat: 34.0522, lng: -118.2437, city: 'Los Angeles', state: 'CA', zipcode: '90210' },
+      timestamp: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString() // 2 hours ago
+    },
+    {
+      id: nextId++,
+      groupName: 'Medical Aid Network',
+      activityType: 'Medical Supplies',
+      description: 'First aid supplies and basic medical care',
+      contact: { email: 'medaid@network.org' },
+      location: { lat: 41.8781, lng: -87.6298, city: 'Chicago', state: 'IL', zipcode: '60601' },
+      timestamp: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString() // 1 hour ago
+    },
+    {
+      id: nextId++,
+      groupName: 'Clothing Drive',
+      activityType: 'Clothing Drive',
+      description: 'Winter coats and warm clothing',
+      contact: { email: 'clothes@drive.org' },
+      location: { lat: 39.7392, lng: -104.9903, city: 'Denver', state: 'CO', zipcode: '80202' },
+      timestamp: now.toISOString() // Current hour
+    }
+  ];
+  
+  activities.push(...sampleActivities);
+  
+  console.log('Data reset complete. Root admin user and sample activities created.');
+};
+resetAndCreateAdmin();
 
 console.log('Using in-memory storage');
 
@@ -41,9 +118,15 @@ const auth = (req, res, next) => {
   }
 };
 
-// In-memory storage for activities
-let activities = [];
-let nextId = 1;
+// Admin middleware
+const adminAuth = (req, res, next) => {
+  if (!req.user.isAdmin) {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
+};
+
+
 
 // GET all activities
 app.get('/api/activities', (req, res) => {
@@ -129,7 +212,7 @@ app.post('/api/validate-address', async (req, res) => {
 // Auth routes
 app.post('/api/register', async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, zipcode, pronouns, bio } = req.body;
     if (users.find(u => u.username === username)) {
       return res.status(400).json({ error: 'Username already exists' });
     }
@@ -137,9 +220,19 @@ app.post('/api/register', async (req, res) => {
       return res.status(400).json({ error: 'Email already exists' });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = { id: nextUserId++, username, email, passwordHash: hashedPassword, groups: [] };
+    const user = { 
+      id: nextUserId++, 
+      username, 
+      email, 
+      passwordHash: hashedPassword, 
+      groups: [],
+      zipcode: zipcode || '',
+      pronouns: pronouns || '',
+      bio: bio || '',
+      isAdmin: false
+    };
     users.push(user);
-    res.json({ user: { id: user.id, username: user.username, email: user.email } });
+    res.json({ user: { id: user.id, username: user.username, email: user.email, zipcode: user.zipcode, pronouns: user.pronouns, bio: user.bio } });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -152,8 +245,114 @@ app.post('/api/login', async (req, res) => {
     if (!user || !await bcrypt.compare(password, user.passwordHash)) {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
-    const token = jwt.sign({ userId: user.id, username: user.username, email: user.email }, JWT_SECRET);
-    res.json({ token, user: { id: user.id, username: user.username, email: user.email } });
+    const token = jwt.sign({ userId: user.id, username: user.username, email: user.email, isAdmin: user.isAdmin }, JWT_SECRET);
+    res.json({ token, user: { id: user.id, username: user.username, email: user.email, zipcode: user.zipcode, pronouns: user.pronouns, bio: user.bio, isAdmin: user.isAdmin } });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Profile routes
+app.get('/api/profile/:userId', auth, (req, res) => {
+  try {
+    const user = users.find(u => u.id == req.params.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ id: user.id, username: user.username, email: user.email, zipcode: user.zipcode, pronouns: user.pronouns, bio: user.bio });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/api/profile', auth, (req, res) => {
+  try {
+    const { zipcode, pronouns, bio } = req.body;
+    const user = users.find(u => u.id === req.user.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    
+    user.zipcode = zipcode || user.zipcode;
+    user.pronouns = pronouns || user.pronouns;
+    user.bio = bio || user.bio;
+    
+    res.json({ id: user.id, username: user.username, email: user.email, zipcode: user.zipcode, pronouns: user.pronouns, bio: user.bio });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Admin routes
+app.get('/api/admin/users', auth, adminAuth, (req, res) => {
+  try {
+    const userList = users.map(u => ({
+      id: u.id,
+      username: u.username,
+      email: u.email,
+      zipcode: u.zipcode,
+      pronouns: u.pronouns,
+      bio: u.bio,
+      isAdmin: u.isAdmin,
+      groups: u.groups
+    }));
+    res.json(userList);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/users/:userId', auth, adminAuth, (req, res) => {
+  try {
+    const { username, email, zipcode, pronouns, bio, isAdmin } = req.body;
+    const user = users.find(u => u.id == req.params.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    
+    user.username = username || user.username;
+    user.email = email || user.email;
+    user.zipcode = zipcode || user.zipcode;
+    user.pronouns = pronouns || user.pronouns;
+    user.bio = bio || user.bio;
+    user.isAdmin = isAdmin !== undefined ? isAdmin : user.isAdmin;
+    
+    res.json({ id: user.id, username: user.username, email: user.email, zipcode: user.zipcode, pronouns: user.pronouns, bio: user.bio, isAdmin: user.isAdmin });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/users/:userId', auth, adminAuth, (req, res) => {
+  try {
+    const userIndex = users.findIndex(u => u.id == req.params.userId);
+    if (userIndex === -1) return res.status(404).json({ error: 'User not found' });
+    
+    users.splice(userIndex, 1);
+    res.json({ message: 'User deleted' });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/messages', auth, adminAuth, (req, res) => {
+  try {
+    res.json(messages);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/messages/:messageId', auth, adminAuth, (req, res) => {
+  try {
+    const messageIndex = messages.findIndex(m => m.id == req.params.messageId);
+    if (messageIndex === -1) return res.status(404).json({ error: 'Message not found' });
+    
+    messages.splice(messageIndex, 1);
+    res.json({ message: 'Message deleted' });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/reset', auth, adminAuth, (req, res) => {
+  try {
+    resetAndCreateAdmin();
+    res.json({ message: 'Server data reset complete' });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -170,17 +369,59 @@ app.get('/api/groups', auth, (req, res) => {
   }
 });
 
+app.get('/api/groups/discover', auth, (req, res) => {
+  try {
+    const user = users.find(u => u.id === req.user.userId);
+    const userZip = user.zipcode;
+    const userGroups = user.groups;
+    
+    // Filter out groups user is already in
+    const availableGroups = groups.filter(g => !userGroups.includes(g._id));
+    
+    let nearbyGroups = [];
+    let popularGroups = [];
+    
+    if (userZip) {
+      // Groups with zipcodes, sorted by distance (simplified - same zip first)
+      nearbyGroups = availableGroups
+        .filter(g => g.zipcode)
+        .sort((a, b) => {
+          if (a.zipcode === userZip && b.zipcode !== userZip) return -1;
+          if (b.zipcode === userZip && a.zipcode !== userZip) return 1;
+          return 0;
+        })
+        .slice(0, 10);
+    }
+    
+    // Popular groups without zipcodes, sorted by member count
+    popularGroups = availableGroups
+      .filter(g => !g.zipcode)
+      .sort((a, b) => b.members.length - a.members.length)
+      .slice(0, 10);
+    
+    res.json({ nearbyGroups, popularGroups });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 app.get('/api/groups/all', (req, res) => {
   res.json(groups);
 });
 
 app.post('/api/groups', auth, (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, description, zipcode } = req.body;
     if (groups.find(g => g.name === name)) {
       return res.status(400).json({ error: 'Group already exists' });
     }
-    const group = { _id: nextGroupId++, name, members: [req.user.userId] };
+    const group = { 
+      _id: nextGroupId++, 
+      name, 
+      description: description || '',
+      zipcode: zipcode || '',
+      members: [req.user.userId] 
+    };
     groups.push(group);
     const user = users.find(u => u.id === req.user.userId);
     user.groups.push(group._id);
@@ -203,6 +444,22 @@ app.post('/api/groups/join', auth, (req, res) => {
       user.groups.push(groupId);
     }
     res.json(group);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/groups/leave', auth, (req, res) => {
+  try {
+    const { groupId } = req.body;
+    const group = groups.find(g => g._id === groupId);
+    if (!group) return res.status(404).json({ error: 'Group not found' });
+    
+    group.members = group.members.filter(id => id !== req.user.userId);
+    const user = users.find(u => u.id === req.user.userId);
+    user.groups = user.groups.filter(id => id !== groupId);
+    
+    res.json({ message: 'Left group successfully' });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

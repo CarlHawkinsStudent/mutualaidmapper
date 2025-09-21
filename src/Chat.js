@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
+import ProfileModal from './ProfileModal';
 
 const API_BASE = window.location.origin;
 
@@ -8,6 +9,7 @@ function Chat({ token, user, groupId, groupName }) {
   const [newMessage, setNewMessage] = useState('');
   const [socket, setSocket] = useState(null);
   const messagesEndRef = useRef(null);
+  const [showProfile, setShowProfile] = useState(null);
 
   useEffect(() => {
     const newSocket = io(API_BASE);
@@ -54,7 +56,12 @@ function Chat({ token, user, groupId, groupName }) {
       <div style={{ height: '300px', overflowY: 'auto', border: '1px solid #ccc', padding: '10px', marginBottom: '10px' }}>
         {messages.map((msg, i) => (
           <div key={i} style={{ marginBottom: '5px' }}>
-            <strong>{msg.username}:</strong> {msg.text}
+            <strong 
+              style={{ cursor: 'pointer', color: '#007bff' }}
+              onClick={() => setShowProfile(msg.userId)}
+            >
+              {msg.username}:
+            </strong> {msg.text}
           </div>
         ))}
         <div ref={messagesEndRef} />
@@ -68,6 +75,15 @@ function Chat({ token, user, groupId, groupName }) {
         />
         <button type="submit" style={{ width: '18%', marginLeft: '2%' }}>Send</button>
       </form>
+      
+      {showProfile && (
+        <ProfileModal 
+          userId={showProfile} 
+          token={token} 
+          onClose={() => setShowProfile(null)}
+          isOwnProfile={showProfile === user.id}
+        />
+      )}
     </div>
   );
 }
